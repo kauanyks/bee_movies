@@ -3,9 +3,10 @@
 Projeto desenvolvido a partir da simulação de uma empresa real, desde a criação de perguntas de negócio até a criação de um dashboard de análise de dados.
 
 Base de dados: Sakila Sample Database
-doc: https://dev.mysql.com/doc/sakila/en/sakila-introduction.html
+Doc: https://dev.mysql.com/doc/sakila/en/sakila-introduction.html
 
-A empresa fictícia se chama Bee Movies, uma vez que os dados representam uma loja de aluguel de DVD. Os requisitos de negócio definidos foram os seguintes:
+A empresa fictícia se chama Bee Movies, uma vez que os dados representam uma loja de aluguel de DVDs. Os requisitos de negócio definidos foram os seguintes:
+
     - Visão gerencial da situação atual da empresa (mês atual)
     - Análise de quais categorias de filmes são mais locadas e representam maior receita
     - Quais os principais clientes da empresa e onde estão localizados
