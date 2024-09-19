@@ -1,28 +1,28 @@
-# Introdução
+# Introduction
 
-Projeto desenvolvido a partir da simulação de uma empresa real, desde a criação de perguntas de negócio até a criação de um dashboard de análise de dados.
+The project was developed based on the simulation of a real company, from the creation of business questions to the development of a data analysis dashboard.
 
-Base de dados: Sakila Sample Database, documentação: https://dev.mysql.com/doc/sakila/en/sakila-introduction.html
+Database: Sakila Sample Database, documentation: https://dev.mysql.com/doc/sakila/en/sakila-introduction.html
 
-A empresa fictícia se chama Bee Movies, uma vez que os dados representam uma loja de aluguel de DVDs. Os requisitos de negócio definidos foram os seguintes:
+The fictional company is called Bee Movies, as the data represents a DVD rental store. The defined business requirements were as follows:
 
-    - Visão gerencial da situação atual da empresa (mês atual)
-    - Análise de quais categorias de filmes são mais locadas e representam maior receita
-    - Quais os principais clientes da empresa e onde estão localizados
-    - Como está a receita da empresa mês a mês e a comparação com a meta
-    - Análise de quais países são os principais clientes
+    - Management view of the company's current situation (current month)
+    - Analysis of which movie categories are most rented and generate the highest revenue
+    - Identification of the company's main customers and their locations
+    - Month-by-month revenue analysis and comparison with the target
+    - Analysis of which countries are the main customers
 
-# Modelagem de dados
+# Data Modeling
 
-A estrutura do banco de dados segue conforme imagem abaixo:
+The database structure follows the diagram below:
 
 ![This is an image](https://dev.mysql.com/doc/sakila/en/images/sakila-schema.png)
 
-A fim de simplificar os relacionamentos e montar um star schema no Power BI, foram criadas as seguintes tabelas:
+In order to simplify the relationships and create a star schema in Power BI, the following tables were created:
 
 **d_payment** 
 
-Dimensão com informações de pagamento das locações.
+A dimension table containing payment information for the rentals.
 ```
 schema = (
     payment_id varchar(10), 
@@ -31,7 +31,7 @@ schema = (
     payment_type varchar(30)
 )
 ```
-Para poder ter uma análise mais detalhada, foi criado o campo "payment_type" a partir da geração de números aleatórios e atribuindo uma forma de acordo com o número gerado.
+To enable a more detailed analysis, the "payment_type" field was created by generating random numbers and assigning a payment method based on the generated number.
 ```
 CASE
     WHEN round(RAND() * 3) = 0 THEN "debit card"
@@ -40,11 +40,11 @@ CASE
     ELSE "pix"
 END payment_type
 ```
-As demais informações são provenientes da tabela original payment.
+The remaining information comes from the original "payment" table.
 
 **d_category**
 
-Dimensão com a nomenclatura da categoria a partir do id. Todas informações são provenientes da tabela original category.
+A dimension table with the category name derived from the category ID. All information comes from the original "category" table.
 ```
 schema = (
     category_id varchar(10),
@@ -53,7 +53,7 @@ schema = (
 ```
 **d_film**
 
-Dimensão com informações dos filmes. Todas informações são provenientes da tabela original film.
+A dimension table containing movie information. All data comes from the original "film" table.
 ```
 schema = (
     film_id varchar(10),
@@ -66,7 +66,7 @@ schema = (
 ```
 **d_customer**
 
-Dimensão com informações dos clientes. As informações são provenientes das tabelas originais customer, address, city e country.
+A dimension table containing customer information. The data comes from the original "customer," "address," "city," and "country" tables.
 ```
 schema = (
     customer_id varchar(10),
@@ -82,7 +82,7 @@ schema = (
 ```
 **d_store**
 
-Dimensão com informações das lojas. As informações são provenientes das tabelas originais store, address, city e country.
+A dimension table containing store information. The data comes from the original "store," "address," "city," and "country" tables.
 ```
 schema = (
     store_id varchar(10),
@@ -94,7 +94,7 @@ schema = (
 ```
 **f_rental**
 
-Tabela fato contendo as ocorrências de locação juntamente com os campos category_id, film_id, store_id e payment_id. As informações são provenientes das tabelas originais rental, inventory, film_category e payment.
+A fact table containing rental occurrences along with the fields category_id, film_id, store_id, and payment_id. The data comes from the original "rental," "inventory," "film_category," and "payment" tables.
 ```
 schema = (
     rental_id varchar(10),
@@ -110,37 +110,37 @@ schema = (
 
 ## Star Schema
 
-A partir da modelagem de dados realizada, foi estabelecida uma conexão do Power BI com o banco de dados sakila, a partir do localhost. 
+Based on the data modeling, a connection was established between Power BI and the Sakila database from the localhost.
 
-Dentro da ferramenta de BI foi criada uma tabela d_calendar, com datas variáveis a partir das datas presentes na tabela fato, garantindo que todo o período necessário fosse contemplado.
+Within the BI tool, a d_calendar table was created with variable dates based on the dates present in the fact table, ensuring that the entire required period was covered.
 ```
 d_calendar = CALENDAR(MIN(f_rental[rental_date]), MAX(f_rental[rental_date]))
 ```
-Exceto pela d_calendar, todas as tabelas dimensão foram ligadas à tabela fato pelo id correspondente, em uma ligação de 1 para muitos. A calendário foi relacionada através da data, numa ligação 1:1
+Except for the d_calendar, all dimension tables were linked to the fact table by the corresponding ID, using a one-to-many relationship. The calendar was related through the date, using a 1:1 relationship.
 
-## Construção Dashboard
+## Dashboard
 
-Todas as telas exceto a home apresentam filtros de ano, mês, país e nome de cliente, que estão sincronizados, ou seja, a alteração de algum deles em uma página é replicada nas demais.
+All pages, except for the home screen, feature synchronized filters for year, month, country, and customer name. This means that any changes made to these filters on one page are automatically reflected across all other pages.
 
-### Tela Home
+### Home
 
-Foi criada uma tela inicial com as principais informações num formato gerencial. Para mostrar apenas a informação mais recente (mês atual), foi criada uma coluna calculada (booleano) na tabela calendário, a partir da fórmula descrita abaixo e utilizando um filtro na página que seleciona somente os dados identificados como mês de referência na fórmula.
+A home screen was created displaying the key information in a managerial format. To show only the most recent information (current month), a calculated column (boolean) was added to the calendar table using the formula described below. A page filter was then applied to select only the data identified as the reference month in the formula.
 ```
 mes_ref = IF(AND(YEAR(d_calendar[Date]) = YEAR(MAX(d_calendar[Date])), MONTH(d_calendar[Date]) = MONTH(MAX(d_calendar[Date]))), 1, 0)
 ```
-### Tela Categories
+### Categories
 
-Para análise das categorias, foi disponibilizada uma evolução histórica com base no total de locações e um top 5. Ademais, foi criada uma matriz que apresenta valores totais de locação e receita, a qual pode ser visualizada somente por categorias ou numa forma mais granular, visualizando por filmes dentro de cada categoria.
+For the analysis of the categories, a historical evolution was made available based on the total number of rentals and a top 5. In addition, a matrix was created that presents total rental and revenue values, which can be viewed only by categories or in a more granular way, viewing by films within each category.
 
-### Tela Clients
+### Clients
 
-A tela de cliente apresenta Big Numbers relacionados ao total de clientes da empresa e o total de países atendidos por ela. É possível também verificar quais os 5 clientes que mais realizam locações e verificar onde cada um está localizado a partir de um mapa*.
+The customer screen displays Big Numbers related to the total number of customers and the total number of countries served by the company. Additionally, it shows the top 5 customers with the highest rental volumes and their locations on a map*.
 
-*Para que seja possível a visualização do mapa, é necessário habilitar a função no Power BI: Arquivo > Opções e Configurações > Opções > Global > Segurança.
+*To enable map visualization, you need to activate the feature in Power BI: File > Options and Settings > Options > Global > Security.
 
-### Tela Revenue
+### Revenue
 
-A tela de receita traz uma particularidade em relação às demais telas. Além do gráfico de evolução histórica, da tabela com informações mais granulares e da análise de qual forma de pagamento é mais utilizada, é apresentado um gráfico de indicador (velocímetro) que faz a comparação da receita atingida com a meta definida. Para isso, foi utilizado o recurso de indicador, que permite que haja um filtro oculto atrelado à ação de um botão. Foi necessário também alterar as interações entre os componentes da tela, para que o filtro oculto funcionasse apenas para o velocímetro enquanto os demais filtros da tela funcionassem para as outras visualizações. Além disso, há também o uso de formatação condiciontal a partir de uma medida que define a cor desse velocímetro, sendo verde para valores acima da meta e vermelho para valores abaixo.
+The revenue screen has a unique feature compared to the other screens. In addition to the historical evolution graph, the table with more granular information and the analysis of which payment method is most used, an indicator graph (speedometer) is presented that compares the revenue achieved with the defined target. To achieve this, the indicator feature was used, which allows for a hidden filter linked to the action of a button. It was also necessary to change the interactions between the screen components, so that the hidden filter would only work for the speedometer while the other filters on the screen would work for the other views. In addition, there is also the use of conditional formatting based on a measure that defines the color of this speedometer, with green for values ​​above the target and red for values ​​below.
 
 ```
 rev_conditional_format = 
@@ -151,6 +151,6 @@ rev_conditional_format =
     )
 ```
 
-### Tela Countries
+### Countries
 
-Por fim, a tela de análise dos países apresenta gráficos mais simples, porém com um detalhe diferente das demais: o gráfico que apresenta o total de clientes por país possuí uma dica de ferramenta personalizada, que, ao passar o mouse em cima de cada barra do gráfico, é apresentada uma tabela com o nome e endereço dos clientes.
+Finally, the country analysis screen presents simpler graphs, but with a detail different from the others: the graph that shows the total number of customers by country has a personalized tooltip, which, when hovering the mouse over each bar on the graph, displays a table with the name and address of the customers.
